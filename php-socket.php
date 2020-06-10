@@ -32,9 +32,7 @@ while (true) {
 		while(socket_recv($newSocketArrayResource, $socketData, 1024, 0) >= 1){
 			$socketMessage = $chatHandler->unseal($socketData);
 			$messageObj = json_decode($socketMessage);	
-			print_r($messageObj->image);
-			$chat_box_message = $chatHandler->createMessage($messageObj->chat_user, $messageObj->chat_message);
-			$chatHandler->send($messageObj->socketUser, $chat_box_message);
+			$chatHandler->send($messageObj->socketUser, $messageObj->receipent, $messageObj->chat_user,  $messageObj->chat_message, $messageObj->image);
 			break 2;
 		}
 		

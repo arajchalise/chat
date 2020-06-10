@@ -1,15 +1,24 @@
 <?php
+
 class ChatHandler {
-	function send($clients, $message) {
+	function send($sender, $clients, $user, $message, $image) {
+		require 'vendor/autoload.php';
+		$client = new MongoDB\Client('mongodb+srv://araj:araj@cluster0-t8yjz.mongodb.net/chat?retryWrites=true&w=majority');
+		$db = $client->chat;
+		$collection = $db->chats;
 		global $clientSocketArray;
-		$messageLength = strlen($message);
-		foreach($clients as $client)
-		{
-			if(isset($clientSocketArray[$client])){
-				@socket_write($clientSocketArray[$client], $message, $messageLength);
-			}
-		}
-		print_r($clientSocketArray);
+		$messages = $this->createMessage($user, $message, $clients);
+		$messageLength = strlen($messages);
+		$document = array( 
+			"sender_user_id" => $sender, 
+			"receiver_user_id" => $clients,
+			"message" => $message,
+			"date" => date('Y-m-d H:i:s'),
+			'type' => 'text'
+		);
+		$collection->insertOne($document);
+		@socket_write($clientSocketArray[$clients], $messages, $messageLength);
+		@socket_write($clientSocketArray[$sender], $messages, $messageLength);
 		return true;
 	}
 
@@ -71,9 +80,9 @@ class ChatHandler {
 	}
 	
 	
-	function createMessage($chat_user,$chat_box_message) {
+	function createMessage($chat_user,$chat_box_message, $clients) {
 		$message = $chat_user . ": <div class='chat-box-message'>" . $chat_box_message . "</div>";
-		$messageArray = array('message'=>$message,'message_type'=>'chat-box-html');
+		$messageArray = array('message'=>$message,'message_type'=>'chat-box-html-'.$clients);
 		$chatMessage = $this->seal(json_encode($messageArray));
 		return $chatMessage;
 	}
